@@ -2,6 +2,7 @@ module If_stage (
 					input logic clk,
   					input logic reset,
   					input logic pc_sel,
+  input logic [3-1:0] reg_mux_sel,
   input logic [32-1:0]alu_out_Ex,
   					output logic [32-1:0] pc_ID,
   					output logic [32-1:0] inst_ID
@@ -45,12 +46,34 @@ module If_stage (
   end
 
 	//pipeline registers
+  logic [32-1:0] pc_register_mux_out;
+  logic [32-1:0] inst_ID_mux_out;
+  always @ (*) begin
+    case (reg_mux_sel)
+      //normal input
+      3'b001: begin
+        		pc_register_mux_out = pc_register;
+        		inst_ID_mux_out = inst_IF;
+      end
+      //flushing
+      3'b010: begin
+        		pc_register_mux_out = 0;
+        		inst_ID_mux_out = 0;
+      end
+      //stalling
+      3'b100: begin
+        		pc_register = pc_ID;
+        		inst_ID_mux_out = inst_ID;
+      end
+      
+    endcase
+  end
   
   always @(posedge clk) begin
-  	pc_ID = pc_register;  
+  	pc_ID = pc_register_mux_out;  
   end
   always @(posedge clk) begin
-  	inst_ID = inst_IF ;
+  	inst_ID = inst_ID_mux_out ;
   end
   
 endmodule
